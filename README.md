@@ -4,10 +4,9 @@ Interfaz web para la API [fs2_todo_backend](https://github.com/donkiwicl/fs2_tod
 
 ## Funcionalidades
 
-- Login con HTTP Basic contra el backend (sesión guardada en `sessionStorage`)
-- Listar tareas con filtros: todas, pendientes, finalizadas
-- Crear, editar y eliminar tareas
-- Marcar como finalizada / pendiente
+- **Sección pública (solo lectura):** cualquiera puede ver las tareas y filtrarlas: todas, pendientes, finalizadas
+- **Sección privada:** tras iniciar sesión se pueden crear, editar, eliminar y marcar tareas como finalizadas o pendientes
+- Autenticación con JWT (`POST /api/auth/login`), token guardado en `sessionStorage` y descartado al expirar
 - Validación de largo (nombre 30, descripción 256) y errores del backend por campo
 - Modo claro/oscuro automático y diseño responsive
 
@@ -15,7 +14,7 @@ Interfaz web para la API [fs2_todo_backend](https://github.com/donkiwicl/fs2_tod
 
 ```
 src/
-├── api/todoApi.js        cliente HTTP de /api/todos
+├── api/todoApi.js        cliente HTTP (login y /api/todos con Bearer)
 ├── hooks/useTodos.js     estado y operaciones sobre las tareas
 ├── components/
 │   ├── LoginForm.jsx
@@ -38,10 +37,10 @@ npm install
 npm run dev
 ```
 
-Abrir http://localhost:5173 e ingresar con `admin` / `admin123`.
+Abrir http://localhost:5173. Sin sesión se ve la lista en modo lectura; con **Iniciar sesión** (`admin` / `admin123`) se habilita la edición.
 
-En desarrollo, Vite redirige `/api` al backend (ver `vite.config.js`), por lo que no se requiere CORS.
-Para apuntar a otro backend, copiar `.env.example` a `.env` y ajustar `BACKEND_URL`.
+El frontend llama directamente al backend (`VITE_API_URL`, por defecto `http://localhost:8080` en `.env.development`).
+El backend permite este origen mediante CORS (`CORS_ALLOWED_ORIGINS`).
 
 ## Build de producción
 
@@ -49,4 +48,4 @@ Para apuntar a otro backend, copiar `.env.example` a `.env` y ajustar `BACKEND_U
 npm run build
 ```
 
-Si el frontend se sirve desde un origen distinto al backend, definir `VITE_API_URL` y habilitar CORS en el backend.
+Definir `VITE_API_URL` con la URL pública del backend y agregar el origen del frontend a `CORS_ALLOWED_ORIGINS` en el backend.

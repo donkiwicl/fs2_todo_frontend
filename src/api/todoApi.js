@@ -1,4 +1,4 @@
-const BASE_URL = `${import.meta.env.VITE_API_URL ?? ''}/api/todos`
+const API_URL = `${import.meta.env.VITE_API_URL ?? ''}/api`
 
 export class ApiError extends Error {
   constructor(status, message, errores = {}) {
@@ -8,40 +8,42 @@ export class ApiError extends Error {
   }
 }
 
-export const encodeCredentials = (usuario, password) => btoa(`${usuario}:${password}`)
-
-async function request(path, { credentials, method = 'GET', body } = {}) {
-  const headers = {
-    Authorization: `Basic ${credentials}`,
-    // Evita que el navegador muestre su propio diálogo de login ante un 401
-    'X-Requested-With': 'XMLHttpRequest',
-  }
+async function request(path, { token, method = 'GET', body } = {}) {
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
-
-  if (response.status === 401) {
-    throw new ApiError(401, 'Usuario o contraseña incorrectos')
+  let response
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new ApiError(0, 'No se pudo conectar con el servidor')
   }
+
   if (!response.ok) {
     const problem = await response.json().catch(() => ({}))
-    throw new ApiError(response.status, problem.detail ?? `Error ${response.status}`, problem.errores)
+    const mensaje = response.status === 401 && !problem.detail ? 'Tu sesión expiró, vuelve a ingresar' : problem.detail
+    throw new ApiError(response.status, mensaje ?? `Error ${response.status}`, problem.errores)
   }
   return response.status === 204 ? null : response.json()
 }
 
+export const authApi = {
+  login: (usuario, password) => request('/auth/login', { method: 'POST', body: { usuario, password } }),
+}
+
 export const todoApi = {
-  listar: (credentials, finalizado) => {
-    const query = finalizado === undefined ? '' : `?finalizado=${finalizado}`
-    return request(query, { credentials })
-  },
-  crear: (credentials, todo) => request('', { credentials, method: 'POST', body: todo }),
-  actualizar: (credentials, id, todo) => request(`/${id}`, { credentials, method: 'PUT', body: todo }),
-  finalizar: (credentials, id) => request(`/${id}/finalizar`, { credentials, method: 'PATCH' }),
-  reabrir: (credentials, id) => request(`/${id}/reabrir`, { credentials, method: 'PATCH' }),
-  eliminar: (credentials, id) => request(`/${id}`, { credentials, method: 'DELETE' }),
+  // Sección pública (solo lectura)
+  listar: () => request('/todos'),
+
+  // Sección privada (requiere JWT)
+  crear: (token, todo) => request('/todos', { token, method: 'POST', body: todo }),
+  actualizar: (token, id, todo) => request(`/todos/${id}`, { token, method: 'PUT', body: todo }),
+  finalizar: (token, id) => request(`/todos/${id}/finalizar`, { token, method: 'PATCH' }),
+  reabrir: (token, id) => request(`/todos/${id}/reabrir`, { token, method: 'PATCH' }),
+  eliminar: (token, id) => request(`/todos/${id}`, { token, method: 'DELETE' }),
 }

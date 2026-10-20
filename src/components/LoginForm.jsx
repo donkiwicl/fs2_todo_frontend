@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { encodeCredentials, todoApi } from '../api/todoApi'
+import { authApi } from '../api/todoApi'
 
-export default function LoginForm({ onLogin }) {
+export default function LoginForm({ onLogin, onCancel, aviso }) {
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -11,12 +11,10 @@ export default function LoginForm({ onLogin }) {
     e.preventDefault()
     setEnviando(true)
     setError(null)
-    const credentials = encodeCredentials(usuario, password)
     try {
-      await todoApi.listar(credentials)
-      onLogin(credentials, usuario)
+      onLogin(await authApi.login(usuario, password))
     } catch (err) {
-      setError(err.status === 401 ? err.message : 'No se pudo conectar con el servidor')
+      setError(err.message)
     } finally {
       setEnviando(false)
     }
@@ -25,8 +23,10 @@ export default function LoginForm({ onLogin }) {
   return (
     <main className="login">
       <form className="card login-card" onSubmit={handleSubmit}>
-        <h1>TODO List</h1>
-        <p className="muted">Inicia sesión para gestionar tus tareas</p>
+        <h1>Iniciar sesión</h1>
+        <p className="muted">Ingresa para crear, editar y eliminar tareas</p>
+
+        {aviso && <p className="notice">{aviso}</p>}
 
         <label>
           Usuario
@@ -47,6 +47,9 @@ export default function LoginForm({ onLogin }) {
 
         <button type="submit" className="btn btn-primary" disabled={enviando}>
           {enviando ? 'Ingresando…' : 'Ingresar'}
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>
+          Volver a la vista pública
         </button>
       </form>
     </main>

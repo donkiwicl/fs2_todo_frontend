@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import TodoForm from './TodoForm'
 
-export default function TodoItem({ todo, onToggle, onUpdate, onDelete }) {
+export default function TodoItem({ todo, editable, onToggle, onUpdate, onDelete }) {
   const [editando, setEditando] = useState(false)
 
   if (editando) {
@@ -26,6 +26,7 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete }) {
         type="checkbox"
         className="todo-check"
         checked={todo.finalizado}
+        disabled={!editable}
         onChange={() => onToggle(todo).catch(() => {})}
         aria-label={todo.finalizado ? 'Marcar como pendiente' : 'Marcar como finalizada'}
       />
@@ -33,19 +34,21 @@ export default function TodoItem({ todo, onToggle, onUpdate, onDelete }) {
         <span className="todo-name">{todo.nombre}</span>
         {todo.descripcion && <p className="todo-desc">{todo.descripcion}</p>}
       </div>
-      <div className="todo-actions">
-        <button className="btn btn-ghost" onClick={() => setEditando(true)}>
-          Editar
-        </button>
-        <button
-          className="btn btn-ghost btn-danger"
-          onClick={() => {
-            if (confirm(`¿Eliminar "${todo.nombre}"?`)) onDelete(todo.id).catch(() => {})
-          }}
-        >
-          Eliminar
-        </button>
-      </div>
+      {editable && (
+        <div className="todo-actions">
+          <button className="btn btn-ghost" onClick={() => setEditando(true)}>
+            Editar
+          </button>
+          <button
+            className="btn btn-ghost btn-danger"
+            onClick={() => {
+              if (confirm(`¿Eliminar "${todo.nombre}"?`)) onDelete(todo.id).catch(() => {})
+            }}
+          >
+            Eliminar
+          </button>
+        </div>
+      )}
     </li>
   )
 }

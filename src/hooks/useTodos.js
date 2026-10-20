@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { todoApi } from '../api/todoApi'
 
-export function useTodos(credentials, onUnauthorized) {
+export function useTodos(token, onUnauthorized) {
   const [todos, setTodos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
   const manejarError = useCallback(
     (err) => {
-      if (err.status === 401) onUnauthorized()
+      if (err.status === 401) onUnauthorized(err.message)
       // Los errores de validación (400) se muestran junto a cada campo del formulario
       else if (err.status !== 400) setError(err.message)
       throw err
@@ -18,7 +18,7 @@ export function useTodos(credentials, onUnauthorized) {
 
   useEffect(() => {
     todoApi
-      .listar(credentials)
+      .listar()
       .then(setTodos)
       .catch((err) => {
         try {
@@ -28,7 +28,7 @@ export function useTodos(credentials, onUnauthorized) {
         }
       })
       .finally(() => setCargando(false))
-  }, [credentials, manejarError])
+  }, [manejarError])
 
   const reemplazar = (actualizado) =>
     setTodos((actuales) => actuales.map((t) => (t.id === actualizado.id ? actualizado : t)))
@@ -50,21 +50,19 @@ export function useTodos(credentials, onUnauthorized) {
     limpiarError: () => setError(null),
     crear: (todo) =>
       ejecutar(async () => {
-        const creado = await todoApi.crear(credentials, todo)
+        const creado = await todoApi.crear(token, todo)
         setTodos((actuales) => [...actuales, creado])
       }),
-    actualizar: (id, todo) => ejecutar(async () => reemplazar(await todoApi.actualizar(credentials, id, todo))),
+    actualizar: (id, todo) => ejecutar(async () => reemplazar(await todoApi.actualizar(token, id, todo))),
     alternarEstado: (todo) =>
       ejecutar(async () =>
         reemplazar(
-          todo.finalizado
-            ? await todoApi.reabrir(credentials, todo.id)
-            : await todoApi.finalizar(credentials, todo.id),
+          todo.finalizado ? await todoApi.reabrir(token, todo.id) : await todoApi.finalizar(token, todo.id),
         ),
       ),
     eliminar: (id) =>
       ejecutar(async () => {
-        await todoApi.eliminar(credentials, id)
+        await todoApi.eliminar(token, id)
         setTodos((actuales) => actuales.filter((t) => t.id !== id))
       }),
   }

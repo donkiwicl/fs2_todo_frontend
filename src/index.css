@@ -338,6 +338,30 @@ label {
   font-size: 0.9rem;
 }
 
+.notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--primary-soft);
+  font-size: 0.9rem;
+}
+
+.link {
+  font: inherit;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.todo-check:disabled {
+  cursor: default;
+}
+
 /* Login */
 .login {
   min-height: 100vh;

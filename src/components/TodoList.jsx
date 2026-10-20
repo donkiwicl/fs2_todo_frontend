@@ -3,7 +3,7 @@ import TodoItem from './TodoItem'
 export default function TodoList({ todos, filtro, ...acciones }) {
   if (todos.length === 0) {
     const mensajes = {
-      todas: 'No hay tareas todavía. ¡Agrega la primera!',
+      todas: 'No hay tareas todavía.',
       pendientes: 'No tienes tareas pendientes.',
       finalizadas: 'Aún no has finalizado ninguna tarea.',
     }

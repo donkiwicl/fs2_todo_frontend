@@ -4,10 +4,11 @@ import FilterBar from './FilterBar'
 import TodoForm from './TodoForm'
 import TodoList from './TodoList'
 
-export default function TodoPage({ credentials, usuario, onLogout }) {
+export default function TodoPage({ sesion, onLoginClick, onLogout, onSessionExpired }) {
+  const editable = Boolean(sesion)
   const { todos, cargando, error, limpiarError, crear, actualizar, alternarEstado, eliminar } = useTodos(
-    credentials,
-    onLogout,
+    sesion?.token,
+    onSessionExpired,
   )
   const [filtro, setFiltro] = useState('todas')
 
@@ -26,10 +27,18 @@ export default function TodoPage({ credentials, usuario, onLogout }) {
           </p>
         </div>
         <div className="user">
-          <span className="muted">{usuario}</span>
-          <button className="btn" onClick={onLogout}>
-            Cerrar sesión
-          </button>
+          {editable ? (
+            <>
+              <span className="muted">{sesion.usuario}</span>
+              <button className="btn" onClick={onLogout}>
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-primary" onClick={onLoginClick}>
+              Iniciar sesión
+            </button>
+          )}
         </div>
       </header>
 
@@ -37,9 +46,19 @@ export default function TodoPage({ credentials, usuario, onLogout }) {
         <div className="progress-bar" style={{ width: `${progreso}%` }} />
       </div>
 
-      <section className="card">
-        <TodoForm onSubmit={crear} />
-      </section>
+      {editable ? (
+        <section className="card">
+          <TodoForm onSubmit={crear} />
+        </section>
+      ) : (
+        <p className="notice">
+          Estás viendo la sección pública en modo solo lectura.{' '}
+          <button className="link" onClick={onLoginClick}>
+            Inicia sesión
+          </button>{' '}
+          para gestionar las tareas.
+        </p>
+      )}
 
       {error && (
         <p className="alert" role="alert">
@@ -62,6 +81,7 @@ export default function TodoPage({ credentials, usuario, onLogout }) {
           <TodoList
             todos={visibles}
             filtro={filtro}
+            editable={editable}
             onToggle={alternarEstado}
             onUpdate={actualizar}
             onDelete={eliminar}
